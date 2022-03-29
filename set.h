@@ -1,68 +1,65 @@
 #include <set>
 #include <cstddef>
 
-template<typename T>
-struct Node {
-    Node() {}
-    T value;
-    int height;
-    Node* left;
-    Node* right;
-    Node* parent;
-    explicit Node(const T& k) {
-        value = k;
-        height = 1;
-        left = nullptr;
-        right = nullptr;
-        parent = nullptr;
-    }
-};
-
-template<class T>
-class Set;
-
 template<class T>
 class Set {
+private:
+    struct Node {
+        Node() {}
+        T value;
+        int height;
+        Node* left;
+        Node* right;
+        Node* parent;
+        explicit Node(const T& k) {
+            value = k;
+            height = 1;
+            left = nullptr;
+            right = nullptr;
+            parent = nullptr;
+        }
+    };
+
 public:
     class iterator {
     private:
         const Set<T>* set_ = nullptr;
-        Node<T>* t_ = nullptr;
+        Node* vertex_ = nullptr;
     public:
         iterator() = default;
 
-        iterator(Node<T>* t, const Set<T>* set): set_(set), t_(t) {}
+        iterator(Node* vertex, const Set<T>* set): set_(set), vertex_(vertex) {}
 
         const T& operator*() const {
-            return t_->value;
+            return vertex_->value;
         }
 
         const T* operator->() const {
-            return &t_->value;
+            return &vertex_->value;
         }
 
         iterator& operator++() {
-            if (t_ == nullptr) {
+            if (vertex_ == nullptr) {
                 /// по-хорошему нужно бросать исключение
                 return *this;
             }
-            if (t_->right != nullptr) {
-                t_ = t_->right;
-                while (t_->left != nullptr) {
-                    t_ = t_->left;
+            if (vertex_->right != nullptr) {
+                vertex_ = vertex_->right;
+                while (vertex_->left != nullptr) {
+                    vertex_ = vertex_->left;
                 }
                 return *this;
             }
             while (true) {
-                if (t_->parent == nullptr) {
-                    t_ = nullptr;
+                if (vertex_->parent == nullptr) {
+                    vertex_ = nullptr;
                     return *this;
                 }
-                if (t_->parent->left == t_) {
-                    t_ = t_->parent;
+                if (vertex_->parent->left == vertex_) {
+                    vertex_ = vertex_->parent;
                     return *this;
                 }
-                t_ = t_->parent;
+                vertex_ = vertex_->parent;
             }
         }
 
@@ -73,34 +70,34 @@ public:
         }
 
         iterator& operator--() {
-            if (t_ == nullptr) {
-                t_ = set_->root_;
-                if (t_ == nullptr) {
+            if (vertex_ == nullptr) {
+                vertex_ = set_->root_;
+                if (vertex_ == nullptr) {
                     /// по-хорошему нужно бросать исключение
                     return *this;
                 }
-                while (t_->right != nullptr) {
-                    t_ = t_->right;
+                while (vertex_->right != nullptr) {
+                    vertex_ = vertex_->right;
                 }
                 return *this;
             }
-            if (t_->left != nullptr) {
-                t_ = t_->left;
-                while (t_->right != nullptr) {
-                    t_ = t_->right;
+            if (vertex_->left != nullptr) {
+                vertex_ = vertex_->left;
+                while (vertex_->right != nullptr) {
+                    vertex_ = vertex_->right;
                 }
                 return *this;
             }
             while (true) {
-                if (t_->parent == nullptr) {
+                if (vertex_->parent == nullptr) {
                     /// по-хорошему нужно бросать исключение
                     return *this;
                 }
-                if (t_->parent->right == t_) {
-                    t_ = t_->parent;
+                if (vertex_->parent->right == vertex_) {
+                    vertex_ = vertex_->parent;
                     return *this;
                 }
-                t_ = t_->parent;
+                vertex_ = vertex_->parent;
             }
         }
 
@@ -111,7 +108,7 @@ public:
         }
 
         bool operator==(const iterator& it) const {
-            return t_ == it.t_ && set_ == it.set_;
+            return vertex_ == it.vertex_ && set_ == it.set_;
         }
 
         bool operator!=(iterator it) const {
@@ -161,11 +158,11 @@ public:
         if (root_ == nullptr) {
             return iterator(nullptr, this);
         }
-        Node<T>* t = root_;
-        while (t->left != nullptr) {
-            t = t->left;
+        Node* vertex = root_;
+        while (vertex->left != nullptr) {
+            vertex = vertex->left;
         }
-        return iterator(t, this);
+        return iterator(vertex, this);
     }
 
     iterator end() const {
@@ -200,47 +197,50 @@ public:
         }
         return *this;
     }
+
+
 private:
-    Node<T>* root_ = nullptr;
+
+    Node* root_ = nullptr;
     size_t size_ = 0;
 
-    void MakeRightSon(Node<T>* t, Node<T>* s) {
-        if (t == nullptr) {
+    void MakeRightSon(Node* vertex, Node* s) {
+        if (vertex == nullptr) {
             return;
         }
-        t->right = s;
+        vertex->right = s;
         if (s != nullptr) {
-            s->parent = t;
+            s->parent = vertex;
         }
     }
 
-    void MakeLeftSon(Node<T>* t, Node<T>* s) {
-        if (t == nullptr) {
+    void MakeLeftSon(Node* vertex, Node* s) {
+        if (vertex == nullptr) {
             return;
         }
-        t->left = s;
+        vertex->left = s;
         if (s != nullptr) {
-            s->parent = t;
+            s->parent = vertex;
         }
     }
 
-    int Height(Node<T>* t) const {
-        return (t == nullptr ? 0 : t->height);
+    int Height(Node* vertex) const {
+        return (vertex == nullptr ? 0 : vertex->height);
     }
 
-    int Diff(Node<T>* t) const {
-        return (t == nullptr ? 0 : Height(t->right) - Height(t->left));
+    int Diff(Node* vertex) const {
+        return (vertex == nullptr ? 0 : Height(vertex->right) - Height(vertex->left));
     }
 
-    void UpdHeight(Node<T>* t) {
-        if (t == nullptr) {
+    void UpdHeight(Node* vertex) {
+        if (vertex == nullptr) {
             return;
         }
-        t->height = std::max(Height(t->left), Height(t->right)) + 1;
+        vertex->height = std::max(Height(vertex->left), Height(vertex->right)) + 1;
     }
 
-    Node<T>* SmallLeftRotate(Node<T>* a) {
-        Node<T>* b = a->right;
+    Node* SmallLeftRotate(Node* a) {
+        Node* b = a->right;
 
         MakeRightSon(a, b->left);
 
@@ -252,8 +252,8 @@ private:
         return b;
     }
 
-    Node<T>* SmallRightRotate(Node<T>* a) {
-        Node<T>* b = a->left;
+    Node* SmallRightRotate(Node* a) {
+        Node* b = a->left;
         MakeLeftSon(a, b->right);
 
         b->right = a;
@@ -264,127 +264,127 @@ private:
         return b;
     }
 
-    Node<T>* Balance(Node<T>* t) {
-        UpdHeight(t);
-        if (Diff(t) == 2) {
-            if (Diff(t->right) < 0) {
-                MakeRightSon(t, SmallRightRotate(t->right));
+    Node* Balance(Node* vertex) {
+        UpdHeight(vertex);
+        if (Diff(vertex) == 2) {
+            if (Diff(vertex->right) < 0) {
+                MakeRightSon(vertex, SmallRightRotate(vertex->right));
             }
-            return SmallLeftRotate(t);
-        } else if (Diff(t) == -2) {
-            if (Diff(t->left) > 0) {
-                MakeLeftSon(t, SmallLeftRotate(t->left));
+            return SmallLeftRotate(vertex);
+        } else if (Diff(vertex) == -2) {
+            if (Diff(vertex->left) > 0) {
+                MakeLeftSon(vertex, SmallLeftRotate(vertex->left));
             }
-            return SmallRightRotate(t);
+            return SmallRightRotate(vertex);
         }
-        return t;
+        return vertex;
     }
 
-    Node<T>* Insert(Node<T>* t, T val) {
-        if (t == nullptr) {
+    Node* Insert(Node* vertex, T val) {
+        if (vertex == nullptr) {
             size_++;
-            return new Node<T>(val);
+            return new Node(val);
         }
-        if (val < t->value) {
-            MakeLeftSon(t, Insert(t->left, val));
-        } else if (t->value < val) {
-            MakeRightSon(t, Insert(t->right, val));
+        if (val < vertex->value) {
+            MakeLeftSon(vertex, Insert(vertex->left, val));
+        } else if (vertex->value < val) {
+            MakeRightSon(vertex, Insert(vertex->right, val));
         }
-        return Balance(t);
+        return Balance(vertex);
     }
 
-    Node<T>* FindMinSubtree(Node<T>* t) const {
-        return (t->left == nullptr ? t : FindMinSubtree(t->left));
+    Node* FindMinSubtree(Node* vertex) const {
+        return (vertex->left == nullptr ? vertex : FindMinSubtree(vertex->left));
     }
 
-    Node<T>* RemoveMinSubtree(Node<T>* t) {
-        if (t->left == nullptr) {
-            return t->right;
+    Node* RemoveMinSubtree(Node* vertex) {
+        if (vertex->left == nullptr) {
+            return vertex->right;
         }
-        MakeLeftSon(t, RemoveMinSubtree(t->left));
-        return Balance(t);
+        MakeLeftSon(vertex, RemoveMinSubtree(vertex->left));
+        return Balance(vertex);
     }
 
-    Node<T>* Erase(Node<T>* t, T val) {
-        if (t == nullptr) {
+    Node* Erase(Node* vertex, T val) {
+        if (vertex == nullptr) {
             return nullptr;
         }
-        if (val < t->value) {
-            MakeLeftSon(t, Erase(t->left, val));
-            return Balance(t);
-        } else if (t->value < val) {
-            MakeRightSon(t, Erase(t->right, val));
-            return Balance(t);
+        if (val < vertex->value) {
+            MakeLeftSon(vertex, Erase(vertex->left, val));
+            return Balance(vertex);
+        } else if (vertex->value < val) {
+            MakeRightSon(vertex, Erase(vertex->right, val));
+            return Balance(vertex);
         }
         size_--;
-        Node<T>* l = t->left;
-        Node<T>* r = t->right;
-        delete t;
-        if (l != nullptr) {
-            l->parent = nullptr;
+        Node* left_son = vertex->left;
+        Node* right_son = vertex->right;
+        delete vertex;
+        if (left_son != nullptr) {
+            left_son->parent = nullptr;
         }
-        if (r != nullptr) {
-            r->parent = nullptr;
+        if (right_son != nullptr) {
+            right_son->parent = nullptr;
         }
-        if (r == nullptr) {
-            return l;
+        if (right_son == nullptr) {
+            return left_son;
         }
-        Node<T>* min = FindMinSubtree(r);
-        MakeRightSon(min, RemoveMinSubtree(r));
-        MakeLeftSon(min, l);
+        Node* min = FindMinSubtree(right_son);
+        MakeRightSon(min, RemoveMinSubtree(right_son));
+        MakeLeftSon(min, left_son);
         return Balance(min);
     }
 
-    Node<T>* Find(Node<T>* t, T x) const {
-        if (t == nullptr) {
+    Node* Find(Node* vertex, T x) const {
+        if (vertex == nullptr) {
             return nullptr;
         }
-        if (x < t->value) {
-            return Find(t->left, x);
-        } else if (t->value < x) {
-            return Find(t->right, x);
+        if (x < vertex->value) {
+            return Find(vertex->left, x);
+        } else if (vertex->value < x) {
+            return Find(vertex->right, x);
         } else {
-            return t;
+            return vertex;
         }
     }
 
-    Node<T>* LowerBound(Node<T>* t, T x, Node<T>* cur_best) const {
-        if (t == nullptr) {
+    Node* LowerBound(Node* vertex, T x, Node* cur_best) const {
+        if (vertex == nullptr) {
             return cur_best;
         }
-        if (t->value < x) {
-            return LowerBound(t->right, x, cur_best);
+        if (vertex->value < x) {
+            return LowerBound(vertex->right, x, cur_best);
         }
-        cur_best = t;
-        return LowerBound(t->left, x, cur_best);
+        cur_best = vertex;
+        return LowerBound(vertex->left, x, cur_best);
     }
 
-    void DeleteTree(Node<T>* t) {
-        if (t == nullptr) {
+    void DeleteTree(Node* vertex) {
+        if (vertex == nullptr) {
             return;
         }
-        DeleteTree(t->left);
-        DeleteTree(t->right);
-        delete t;
+        DeleteTree(vertex->left);
+        DeleteTree(vertex->right);
+        delete vertex;
     }
 
-    Node<T>* Copy(Node<T>* t) {
-        if (t == nullptr) {
+    Node* Copy(Node* vertex) {
+        if (vertex == nullptr) {
             return nullptr;
         }
-        Node<T>* l = Copy(t->left);
-        Node<T>* r = Copy(t->right);
+        Node* left_son = Copy(vertex->left);
+        Node* right_son = Copy(vertex->right);
 
-        Node<T>* new_t = new Node<T>;
-        *new_t = *t;
-        new_t->left = l;
-        if (l != nullptr) {
-            l->parent = new_t;
+        Node* new_vertex = new Node;
+        *new_vertex = *vertex;
+        new_vertex->left = left_son;
+        if (left_son != nullptr) {
+            left_son->parent = new_vertex;
         }
-        new_t->right = r;
-        if (r != nullptr) {
-            r->parent = new_t;
+        new_vertex->right = right_son;
+        if (right_son != nullptr) {
+            right_son->parent = new_vertex;
         }
-        return new_t;
+        return new_vertex;
     }
 };
